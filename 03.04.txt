@@ -1,0 +1,287 @@
+
+2026/03/04
+
+Backend dolgozat gyakorlás
+
+-------------------------
+
+https://szit.hu/doku.php?id=oktatas:web:feladatok:backend#feladat_151
+
+Táblák:
+	| books
+		'id integer (id)
+		'isbn string (ISBN szám)
+		'title string (cím)
+		'author string (szerző)
+		'totalCopies integer (Összes példány)
+		
+	| customers
+		'id integer (id)
+		'idNumber string (igazolványszám)
+		'fullname string (Teljes Név)
+		'email integer (email cím)
+
+npm install (ha nem lenne)		
+npm create sipere@latest
+projektnév: libware
+
+cd libware
+node op key:generate
+
+node op make:model book -a
+node op make:model customer -a
+
+Szerkesztjük:
+	Modellt
+	Migrációs fájlt
+	
+Modell szerkesztés:
+	| book
+		const Book = sequelize.define('books', {
+    isbn: { type: DataTypes.STRING, allowNull: false },
+    title: { type: DataTypes.STRING, allowNull: false },
+    author: { type: DataTypes.STRING, allowNull: false },
+    totalCopies: { type: DataTypes.INTEGER, allowNull: false }
+},
+    {
+        timestamps: true,
+        freezeTableName: true
+    }
+)
+
+	| customer
+		const Customer = sequelize.define('customers', {
+    idNumber: { type: DataTypes.STRING,  allowNull: false  },
+    fullname: { type: DataTypes.STRING, allowNull: false},
+    email: { type: DataTypes.STRING, allowNull: false}
+ }, {
+    timestamps: true,
+    freezeTableName: true
+})
+
+Migrációs fájl szerkesztés:
+	| book
+		async function up({ context: QueryInterface }) {
+  await QueryInterface.createTable('books', {
+    id: {
+      allowNull: false,
+      autoIncrement: true,
+      primaryKey: true,
+      type: DataTypes.INTEGER
+    },
+    isbn: { type: DataTypes.STRING, allowNull: false },
+    title: { type: DataTypes.STRING, allowNull: false },
+    author: { type: DataTypes.STRING, allowNull: false },
+    totalCopies: { type: DataTypes.INTEGER, allowNull: false }
+    ,
+    createdAt: { type: DataTypes.DATE },
+    updatedAt: { type: DataTypes.DATE }
+  });
+}
+
+
+	| customer
+					async function up({context: QueryInterface}) {
+  await QueryInterface.createTable('customers', {
+    id: {
+      allowNull: false,
+      autoIncrement: true,
+      primaryKey: true,
+      type: DataTypes.INTEGER
+    },
+    idNumber: { type: DataTypes.STRING,  allowNull: false  },
+    fullname: { type: DataTypes.STRING, allowNull: false},
+    email: { type: DataTypes.STRING, allowNull: false},
+    createdAt: { type: DataTypes.DATE },
+    updatedAt: { type: DataTypes.DATE }    
+  });
+}
+
+
+
+
+
+Seed fájlok szerkesztése:
+	| book
+		{ isbn: "aaa", title: "Kincses", author: "Pásztor László", totalCopies: 3000},
+		{ isbn: "bbb", title: "Hegy", author: "Pásztor József", totalCopies: 2340},
+		{ isbn: "ccc", title: "Folyó", author: "Pásztor Zoltán", totalCopies: 1300},
+
+async function up({ context: QueryInterface }) {
+  if (db.Book) {
+    await db.Book.bulkCreate([
+      { isbn: "aaa", title: "Kincses", author: "Pásztor László", totalCopies: 3000 },
+      { isbn: "bbb", title: "Hegy", author: "Pásztor József", totalCopies: 2340 },
+      { isbn: "ccc", title: "Folyó", author: "Pásztor Zoltán", totalCopies: 1300 },
+    ]);
+  } else {
+    await QueryInterface.bulkInsert('books', [
+
+    ]);
+  }
+
+}
+	
+	| customer:
+		{ idNumber: "134543TE", fullname: "Kiss József", email: "jozsef.kiss@example.com"}
+		{ idNumber: "245465BA", fullname: "Nagy Béla", email: "bela.nagy@example.com"}
+		{ idNumber: "379864LP", fullname: "Alap Zoltán", email: "zoltan.alap@example.com"}
+
+async function up({ context: QueryInterface }) {
+  if (db.Customer) {
+    await db.Customer.bulkCreate([
+      { idNumber: "134543TE", fullname: "Kiss József", email: "jozsef.kiss@example.com" },
+      { idNumber: "245465BA", fullname: "Nagy Béla", email: "bela.nagy@example.com" },
+      { idNumber: "379864LP", fullname: "Alap Zoltán", email: "zoltan.alap@example.com" },
+    ]);
+  } else {
+    await QueryInterface.bulkInsert('customers', [
+
+    ]);
+  }
+}
+	
+node op migrate
+node op db:seed
+npm run dev
+
+Teszt:
+	Insomnia
+	resen
+		res :8000/api/books
+		res :8000/api/customers
+		
+Minden végpont csak azonosítás után legyen elérhető.
+api.js 
+	router.get('/customers',[verifyToken], CustomerController.index);
+	// router.get('/customers/:id',[verifyToken], CustomerController.show);
+	router.post('/customers',[verifyToken], CustomerController.store);
+	router.put('/customers/:id',[verifyToken], CustomerController.update);
+	router.delete('/customers/:id',[verifyToken], CustomerController.destroy);
+
+	router.get('/books',[verifyToken], BookController.index);
+	// router.get('/books/:id',[verifyToken], BookController.show);
+	router.post('/books',[verifyToken], BookController.store);
+	router.put('/books/:id',[verifyToken], BookController.update);
+	router.delete('/books/:id',[verifyToken], BookController.destroy);
+
+Ellenörzés:
+	User létrehozása (Insomnia):
+		post http://localhost:8000/api/register
+			{
+    "name": "pasztor_laszlo",
+    "email": "laszlo_pasztor@example.com",
+    "password": "titok",
+    "password_confirmation": "titok"
+}
+
+	User bejelentkezése (Insomnia):
+		{
+    "name": "pasztor_laszlo",
+    "password": "titok"
+} -----> eredmény: "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzcyNjQ0OTY1LCJleHAiOjE3NzI3MzEzNjV9.zfS1Y3V40v6QaRqyofE0MlNWAoq68bEQ6Kl4lFKGZcI"
+		
+Accestoken megadása mindenhol --> BearerToken --> Token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzcyNjQ0OTY1LCJleHAiOjE3NzI3MzEzNjV9.zfS1Y3V40v6QaRqyofE0MlNWAoq68bEQ6Kl4lFKGZcI
+
+Írjon dokumentációt, amiben leírja hogyan kell beüzemelni a szervert.
+quick_installation.md:
+ ```cmd
+git clone https://github.com/valai/libware
+cd libware
+npm install
+node op conf:generate
+node op key:generate
+node op migrate
+node op db:seed
+npm run dev
+```
+
+Írjon dokumentációt, milyen végpontok érhetők el, milyen adatokat tárolunk.
+endpoints.md
+# Végpontok
+
+## book
+
+| Végpont | Metódus | Auth | CRUD | Leírás |
+| - | - | - | - | - |
+| /books | GET | igen | read | Könyvek lekérése
+| /books | POST | igen | create | Könyv létrehozása
+| /books/:id | PUT | igen | update | Könyv módosítása
+| /books/:id | DELETE | igen | delete | Könyv törlése
+
+### Könyvek lekérdezése
+
+* /api/books/ GET
+
+### Könyv létrehozás
+
+* /api/books/ POST
+
+```JSON
+    {
+	"isbn": "eee",
+	"title": "Olcsó",
+	"author": "Trehány Zoltán",
+	"totalCopies": 54	
+}
+```
+
+### Könyv módosítása
+
+* /api/books/4 PUT
+
+```JSON
+    {
+	"isbn": "eee",
+	"title": "Olcsó",
+	"author": "Trehány Zoltán",
+	"totalCopies": 51	
+}
+```
+
+### Könyv törlése
+
+* /api/books/4 DELETE
+
+
+## customer
+
+| Végpont | Metódus | Auth | CRUD | Leírás |
+| - | - | - | - | - |
+| /customers | GET | igen | read | Vásárlók lekérése
+| /customers | POST | igen | create | Vásárló létrehozása
+| /customers/:id | PUT | igen | update | Vásárló módosítása
+| /customers/:id | DELETE | igen | delete | Vásárló törlése
+
+### Vásárlók lekérdezése
+
+* /api/customers/ GET
+
+### Vásárló létrehozás
+
+* /api/customers/ POST
+
+```JSON
+    {
+	"idNumber": "479895LO",
+	"fullname": "Bolond Mari",
+	"email" : "mari.botond@example.com"
+}
+```
+
+### Vásárló módosítása
+
+* /api/customers/3 PUT
+
+```JSON
+    {
+	"idNumber": "479895LO",
+	"fullname": "Bolond Jani",
+	"email" : "mari.botond@example.com"
+}
+```
+
+### Vásárló törlése
+
+* /api/customers/3 DELETE
+
